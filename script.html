@@ -1,0 +1,832 @@
+<!-- Bejeweled -->
+<html>
+  <head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" type="text/css" href="style.css" media="all"/>
+    <script type="text/javascript">
+    /* Attributs */
+    var plateau = new Array();
+    for(var i=0; i<8; i++) {
+      plateau[i] = new Array();
+    }
+
+    var timeOutRunning=false;
+    var interval;
+    var level=0;
+    var triesLeft=5;
+    var prevScore=0;
+    var score=0;
+    var name="Apple Player";
+    var maxprogress=373;
+    var actualprogress=0;
+
+    var EstEnJeu=true;
+    var EstEnPause=false;
+
+    var NbrPionI=0;
+    var NbrPionJ=0;
+    var CompteurAnnulation=0;
+
+    var TmpEstActive=false;
+
+    var I_1=-1;
+    var I_2;
+    var J_1=-1;
+    var J_2;
+
+    /* Vérifie que 3 images ne sont pas alignées */
+    function initialisation() {
+      timeOutRunning=false;
+      level=0;
+      triesLeft=5;
+      score=0;
+      resetProgressBarValue();
+      initialisationPlateau();
+      remplirPlateau();
+    }
+
+    /* Initialisation du plateau */
+    function initialisationPlateau() {
+      for (var i = 0; i < 8; i++) {
+        for (var j = 0; j < 8; j++) {
+          plateau[i][j]="box"+(i).toString()+(j).toString();
+        }
+      }  
+    }
+
+    /* Vérifie que 3 images ne sont pas alignées */
+    function remplirPlateau() {
+      for (var i = 0; i < 8; i++) {
+        for (var j = 0; j < 8; j++) {
+          choisirImage(i, j);
+          verifierImage(i, j);
+        }
+      }
+    }
+
+    /* Vide le plateau */
+    function viderPlateau() {
+      for (var i = 0; i < 8; i++) {
+        for (var j = 0; j < 8; j++) {
+          document.getElementById(plateau[i][j]).src="http://localhost/JS/Projet/img/hideBox.png";
+        }
+      }
+    }
+
+    /* Choisit une image */
+    function choisirImage(i, j) {
+      var r=(Math.round(Math.random()*7));
+      switch(r) {
+        case 0:
+          document.getElementById(plateau[i][j]).src="img/box1.png";
+          break;
+        case 1:
+          document.getElementById(plateau[i][j]).src="img/box2.png";
+          break;
+        case 2:
+          document.getElementById(plateau[i][j]).src="img/box3.png";
+          break;
+        case 3:
+          document.getElementById(plateau[i][j]).src="img/box4.png";
+          break;
+        case 4:
+          document.getElementById(plateau[i][j]).src="img/box5.png";
+          break;
+        case 5:
+          document.getElementById(plateau[i][j]).src="img/box6.png";
+          break;
+        case 6:
+          document.getElementById(plateau[i][j]).src="img/box7.png";
+          break;
+        case 7:
+          document.getElementById(plateau[i][j]).src="img/box8.png";
+          break;
+      }
+    }
+
+    /* Vérifie que 3 images ne sont pas alignées */
+    function verifierImage(i, j) {
+      if (i>1 && i<8) {
+        if ((document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i-1][j]).src) && (document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i-2][j]).src)) {
+          choisirImage(i, j);
+          verifierImage(i, j);
+          return;
+        }
+      }
+      if (j>1 && j<8) {
+        if ((document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i][j-1]).src) && (document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i][j-2]).src)) {
+          choisirImage(i, j);
+          verifierImage(i, j);
+          return;
+        }
+      }
+    }
+
+    /* Incrémenter ou décrémenter la barre de chargement */
+      function changedProgressBarValue(nbr) {
+        nbr*=3.73;
+        if (actualprogress+nbr<=0) {
+          EstEnJeu=false;
+          clearInterval(interval);
+          level=0;
+          prevScore=score;
+          score=0;
+          actualprogress=0;
+          document.getElementById("score").innerHTML=" Score : "+(score).toString();
+          document.getElementById("progressValue").innerHTML="0";
+          document.getElementById("indicator").style.width=actualprogress+"px";
+          alert("Vous n'avez plus de temps.");
+          sendHighScores();
+          viderPlateau();
+          resetProgressBarValue('light');
+          for (var j = 0; j < 8; j++) {
+            for (var i = 0; i < 8; i++) {
+              document.getElementById(plateau[i][j]).style.visibility='visible';
+            }
+          }
+          return;
+        }
+        if(actualprogress>=maxprogress-nbr || Math.round((actualprogress+nbr)/3.73)==100) {
+          resetProgressBarValue();    
+          return;
+        } 
+        var progressValue=document.getElementById("progressValue");
+        var indicator=document.getElementById("indicator");
+        actualprogress+=nbr;  
+        indicator.style.width=actualprogress+"px";
+        progressValue.innerHTML=Math.round(actualprogress/3.73);
+      }
+
+    /* Réinitialise la barre de chargement */
+      function resetProgressBarValue() {
+        actualprogress=372/2;
+        level++;
+        document.getElementById("level").innerHTML=" Level : "+(level).toString();
+        var progressValue=document.getElementById("progressValue");
+        var indicator=document.getElementById("indicator"); 
+        indicator.style.width=actualprogress+"px";
+        progressValue.innerHTML=Math.round(actualprogress/3.73);
+      }
+
+    /* Réinitialise la barre de chargement */
+      function resetProgressBarValue(light) {
+        actualprogress=372/2;
+        level++;
+        document.getElementById("level").innerHTML=" Level : "+(level).toString();
+        var progressValue=document.getElementById("progressValue");
+        var indicator=document.getElementById("indicator"); 
+        indicator.style.width=actualprogress+"px";
+        if (Math.round(actualprogress/3.73)==100) resetProgressBarValue();
+        progressValue.innerHTML=Math.round(actualprogress/3.73);
+      }
+
+    /* Décrémente la valeur de la barre de chargement */
+      function decreasedTime() {
+        changedProgressBarValue(-(level*3));
+      }
+
+    /* Effacer solution */
+      function effacerSolution() {
+        document.getElementById("printHint").innerHTML="";
+      }
+
+    /* Recommencer une partie */
+      function restartGame() {
+        maxprogress=373;
+        actualprogress=0;
+
+        EstEnJeu=true;
+        EstEnPause=false;
+
+        NbrPionI=0;
+        NbrPionJ=0;
+        CompteurAnnulation=0;
+
+        TmpEstActive=false;
+
+        I_1=-1;
+        I_2="";
+        J_1=-1;
+        J_2="";
+
+        document.getElementById("triesLeft").innerHTML=" Tries left : 5";
+        document.getElementById("level").innerHTML=" Level : 1";
+        document.getElementById("score").innerHTML=" Score : 0";
+        initialisation();
+        for (var j = 0; j < 8; j++) {
+          for (var i = 0; i < 8; i++) {
+            document.getElementById(plateau[i][j]).style.visibility='visible';
+          }
+        }
+      }
+
+    /* Change le nom */
+    function nameChanged() {
+      name=document.getElementById("playerName").value;
+      document.getElementById("playerName").innerHTML="Enter player name";
+    }
+
+    /* Affiche les meilleurs scores */
+    function displayHighScores() {
+       window.open("highScore.html","nom_popup","menubar=no, status=no, scrollbars=no, menubar=no, width=180, height=200");
+    }
+
+    function sendHighScores() {
+      var data=prevScore+","+name;
+      xmlhttp=new XMLHttpRequest();
+      xmlhttp.open("GET","sendHighScore.php?q="+data,true);
+      xmlhttp.send(); 
+
+      displayHighScores();      
+    }
+
+    /* Switch 2 Boutons */
+    function switchBouton() {
+      var imgTmp;
+      imgTmp=document.getElementById(plateau[I_1][J_1]).src;
+      document.getElementById(plateau[I_1][J_1]).src=document.getElementById(plateau[I_2][J_2]).src;
+      document.getElementById(plateau[I_2][J_2]).src=imgTmp;
+    }
+    
+    function switchI(i, j){
+      var imgTmp;
+      imgTmp=document.getElementById(plateau[i][j]).src;
+      document.getElementById(plateau[i][j]).src=document.getElementById(plateau[i+1][j]).src;
+      document.getElementById(plateau[i+1][j]).src=imgTmp;
+    }
+    
+    function switchJ(i, j){
+      var imgTmp;
+      imgTmp=document.getElementById(plateau[i][j]).src;
+      document.getElementById(plateau[i][j]).src=document.getElementById(plateau[i][j+1]).src;
+      document.getElementById(plateau[i][j+1]).src=imgTmp;
+    }
+    
+    /* Verifier les images après qu'une combinaison est été supprimés */
+    function verifierImageApres() {
+      for (var i = 0; i < 8; i++) {
+        for (var j = 0; j < 8; j++) {
+          if (i>=0 && i<8-2) {
+            if (document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i+1][j]).src && document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i+2][j]).src) {
+              document.getElementById(plateau[i][j]).src="http://localhost/JS/Projet/img/No.png";
+              document.getElementById(plateau[i+1][j]).src="http://localhost/JS/Projet/img/No.png";
+              document.getElementById(plateau[i+2][j]).src="http://localhost/JS/Projet/img/No.png";
+              while(tableauEstRempliEntier()==false) {
+                while(tableauEstRempliPartiel()==false) {
+                  remplirTabEtape1();
+                }
+                remplirTabEtape2();
+                verifierImageApres();
+              }
+            }
+          }
+          if (j>=0 && j<8-2) {
+            if (document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i][j+1]).src && document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i][j+2]).src) {
+              document.getElementById(plateau[i][j]).src="http://localhost/JS/Projet/img/No.png";
+              document.getElementById(plateau[i][j+1]).src="http://localhost/JS/Projet/img/No.png";
+              document.getElementById(plateau[i][j+2]).src="http://localhost/JS/Projet/img/No.png";
+              while(tableauEstRempliEntier()==false) {
+                while(tableauEstRempliPartiel()==false) {
+                  remplirTabEtape1();
+                }
+                remplirTabEtape2();
+                verifierImageApres();
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    /* Verifie la validité d'un mouvement */
+    function verifierCoupValide(){
+      if (I_1==I_2-1 && J_1==J_2 || I_1==I_2+1 && J_1==J_2 || I_1==I_2 && J_1==J_2-1 || I_1==I_2 && J_1==J_2+1) {
+        switchBouton();
+        return true;
+      } else {
+        return false;
+      }
+    }
+    
+    /* Compte la taille d'une combinaison à partir d'une position */
+    function compterTailleCombinaisonAxeIdroite(i, j) {
+      for (var k = i; k < 8; k++) {
+        if (document.getElementById(plateau[i][j]).src==document.getElementById(plateau[k][j]).src) {
+          NbrPionI++;
+        } else {
+          return;
+        }
+      }
+    }
+    
+    function compterTailleCombinaisonAxeIgauche(i, j) {
+      for (var k = i-1;k>=0; k--) {  
+        if (document.getElementById(plateau[i][j]).src==document.getElementById(plateau[k][j]).src) {
+          NbrPionI++;
+        } else {
+          return;
+        }
+      }
+    }
+    
+    function compterTailleCombinaisonAxeJbas(i, j) {
+      for (var k = j; k < 8; k++) { 
+        if (document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i][k]).src) {
+          NbrPionJ++;
+        } else {
+          return;
+        }
+      }
+    }
+    
+    function compterTailleCombinaisonAxeJhaut(i, j) {
+      for (var k = j-1;k>=0; k--) {    
+        if (document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i][k]).src) {
+          NbrPionJ++;
+        } else {
+          return;
+        }
+      }
+    }
+    
+    /* Supprime la combinaison à partir d'une position */
+    function supprimerCombinaisonAxeIdroite(i, j) {
+      for (var k = i+1; k < 8; k++) {
+        if (document.getElementById(plateau[i][j]).src==document.getElementById(plateau[k][j]).src) {
+          document.getElementById(plateau[k][j]).src="http://localhost/JS/Projet/img/No.png";
+        } else {
+          return;
+        }
+      }
+    }
+    
+    function supprimerCombinaisonAxeIgauche(i, j) {
+      for (var k = i-1;k>=0; k--) {  
+        if (document.getElementById(plateau[i][j]).src==document.getElementById(plateau[k][j]).src) {
+          document.getElementById(plateau[k][j]).src="http://localhost/JS/Projet/img/No.png";
+        } else {
+          return;
+        }
+      }
+    }
+    
+    function supprimerCombinaisonAxeJbas(i, j) {
+      for (var k = j+1; k < 8; k++) { 
+        if (document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i][k]).src) {
+          document.getElementById(plateau[i][k]).src="http://localhost/JS/Projet/img/No.png";
+        } else {
+          return;
+        }
+      }
+    }
+    
+    function supprimerCombinaisonAxeJhaut(i, j) {
+      for (var k = j-1;k>=0; k--) {    
+        if (document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i][k]).src) {
+          document.getElementById(plateau[i][k]).src="http://localhost/JS/Projet/img/No.png";
+        } else {
+          return;
+        }
+      }
+    }
+    
+    /* déplace les icons du tableau */
+    function remplirTabEtape1() {
+      for (var i = 0; i < 8; i++) {
+        for (var j = 0; j < 7; j++) {
+          if (document.getElementById(plateau[i][j]).src!="http://localhost/JS/Projet/img/No.png" && document.getElementById(plateau[i][j+1]).src=="http://localhost/JS/Projet/img/No.png") {
+            document.getElementById(plateau[i][j+1]).src=document.getElementById(plateau[i][j]).src;
+            document.getElementById(plateau[i][j]).src="http://localhost/JS/Projet/img/No.png";           
+          }
+        }
+      }
+    }
+    
+    function remplirTabEtape2() {
+      for (var i = 0; i < 8; i++) {
+        for (var j = 0; j < 8; j++) {
+          if (document.getElementById(plateau[i][j]).src=="http://localhost/JS/Projet/img/No.png") {
+            choisirImage(i, j);
+          }
+        }
+      }
+    }
+    
+    /* Vérifie si le tableau est rempli */
+    function tableauEstRempliEntier() {
+      for (var i = 0; i < 8; i++) {
+        for (var j = 0; j < 8; j++) {
+          if (document.getElementById(plateau[i][j]).src=="http://localhost/JS/Projet/img/No.png") {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+    
+    function tableauEstRempliPartiel() {
+      for (var i = 0; i < 8; i++) {
+        for (var j = 0; j < 8; j++) {
+          if (document.getElementById(plateau[i][j]).src=="http://localhost/JS/Projet/img/No.png") {
+            for (var k = 0; k <= j; k++) {
+              if (document.getElementById(plateau[i][k]).src=="http://localhost/JS/Projet/img/No.png") {
+                break;
+              } else {
+                return false;
+              }
+            }
+          }
+        }
+      }
+      return true;
+    }
+
+    /* Fonction de conseil pour un coup */
+    function conseil() {
+      for (var j = 0; j < 8; j++) {
+        for (var i = 0; i < 8; i++) {
+          if (i<7) {
+            switchI(i,j);
+            if (estUneCombinaison(i,j) || estUneCombinaison(i+1,j)) {
+              switchI(i,j);
+              return plateau[i][j];
+            }
+            switchI(i,j);
+          }
+        }
+      }
+      for (var j = 0; j < 8; j++) {
+        for (var i = 0; i < 8; i++) {
+          if (j<7) {
+            switchJ(i,j);
+            if (estUneCombinaison(i,j) || estUneCombinaison(i,j+1)) {
+              switchJ(i,j);
+              return plateau[i][j];
+            }
+            switchJ(i,j);
+          }
+        }
+      }
+      return null;
+    } 
+    
+    function estUneCombinaison(i, j) {
+      if (i+2<=7 && document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i+1][j]).src && document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i+2][j]).src) {
+        score=score+level*100;
+        return true;
+      } else if (i-2>=0 && document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i-1][j]).src && document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i-2][j]).src) {
+        score=score+level*100;
+        return true;
+      } else if (j+2<=7 && document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i][j+1]).src && document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i][j+2]).src) {
+        score=score+level*100;
+        return true;
+      } else if (j-2>=0 && document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i][j-1]).src && document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i][j-2]).src) {
+        score=score+level*100;
+        return true;
+      } else if (i>0 && i<7 && document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i+1][j]).src && document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i-1][j]).src) {
+        score=score+level*100;
+        return true;
+      } else if (j>0 && j<7 && document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i][j+1]).src && document.getElementById(plateau[i][j]).src==document.getElementById(plateau[i][j-1]).src) {
+        score=score+level*100;
+        return true;
+      }
+      return false;
+    }
+
+    /* Image cliquée */
+      function imagePressed(id) {
+        if (timeOutRunning==false && document.getElementById(id).src!="http://localhost/JS/Projet/img/hideBox.png") {
+          if (interval!=null) clearInterval(interval);
+          interval = setInterval("decreasedTime();", 3000)
+          timeOutRunning=true;
+        }
+        if(document.getElementById(id).src=="http://localhost/JS/Projet/img/hideBox.png") {
+          return;
+        }
+        while(EstEnJeu==true && EstEnPause==false) {
+          if (TmpEstActive==false) {
+            TmpEstActive=true;
+          }
+              
+          // Coordonnees des 2 derniers boutons sélectionnés    
+          I_2=I_1;
+          J_2=J_1;
+          I_1=parseInt(id.substring(3,4));
+          J_1=parseInt(id.substring(4,5));
+          
+          document.getElementById(plateau[I_1][J_1]).style.visibility='hidden';
+              
+          if (I_1==I_2 && J_1==J_2) { // On ne peut intervertir le même bouton
+            I_2=I_1;
+            J_2=J_1;
+            return;
+          }
+          if (I_2==-1 && J_2==-1) { // 1 seul bouton ne suffit pas pour switcher
+            return;
+          }
+          if (verifierCoupValide()==false) {
+            document.getElementById(plateau[I_2][J_2]).style.visibility='visible';
+            return;
+          }
+          
+          // Action des boutons
+          CompteurAnnulation=0;
+          NbrPionI=0;
+          compterTailleCombinaisonAxeIdroite(I_1, J_1);
+          compterTailleCombinaisonAxeIgauche(I_1 ,J_1);
+                    
+          if (NbrPionI>=3) {
+            calculScore('I');
+            supprimerCombinaisonAxeIdroite(I_1,J_1);
+            supprimerCombinaisonAxeIgauche(I_1,J_1);
+            document.getElementById(plateau[I_1][J_1]).src="http://localhost/JS/Projet/img/No.png";
+          }
+          
+          NbrPionJ=0;
+          compterTailleCombinaisonAxeJbas(I_1,J_1);
+          compterTailleCombinaisonAxeJhaut(I_1,J_1);
+          
+          if (NbrPionI<3 && NbrPionJ<3) {
+            CompteurAnnulation++;
+          } else if (NbrPionJ>=3) {
+            calculScore('J');
+            supprimerCombinaisonAxeJbas(I_1,J_1);
+            supprimerCombinaisonAxeJhaut(I_1,J_1);
+            document.getElementById(plateau[I_1][J_1]).src="http://localhost/JS/Projet/img/No.png";
+          }
+          
+          NbrPionI=0;
+          compterTailleCombinaisonAxeIdroite(I_2,J_2);
+          compterTailleCombinaisonAxeIgauche(I_2,J_2);
+          
+          if (NbrPionI>=3) {
+            calculScore('I');
+            supprimerCombinaisonAxeIdroite(I_2,J_2);
+            supprimerCombinaisonAxeIgauche(I_2,J_2);
+            document.getElementById(plateau[I_2][J_2]).src="http://localhost/JS/Projet/img/No.png";
+          }
+          
+          NbrPionJ=0;
+          compterTailleCombinaisonAxeJbas(I_2,J_2);
+          compterTailleCombinaisonAxeJhaut(I_2,J_2);
+          
+          if (NbrPionI<3 && NbrPionJ<3) {
+            CompteurAnnulation++;
+          } else if (NbrPionJ>=3) {
+            calculScore('J');
+            supprimerCombinaisonAxeJbas(I_2,J_2);
+            supprimerCombinaisonAxeJhaut(I_2,J_2);
+            document.getElementById(plateau[I_2][J_2]).src="http://localhost/JS/Projet/img/No.png";
+          }
+          document.getElementById(plateau[I_2][J_2]).style.visibility='visible';
+          
+          if (CompteurAnnulation==2) {
+            document.getElementById(plateau[I_2][J_2]).style.visibility='visible';
+            switchBouton();
+            triesLeft--;
+            document.getElementById("triesLeft").innerHTML=" Tries left : "+(triesLeft).toString();
+            if (triesLeft<=0) {
+              EstEnJeu=false;
+              triesLeft=5
+              prevScore=score;
+              score=0;
+              level=0;
+              document.getElementById("score").innerHTML=" Score : "+(score).toString();
+              document.getElementById("triesLeft").innerHTML=" Tries left : "+(triesLeft).toString();
+              clearInterval(interval);
+              alert("Vous avez utilisé tous vos éssais.");
+              sendHighScores();
+              viderPlateau();
+              resetProgressBarValue('light');
+              for (var j = 0; j < 8; j++) {
+                for (var i = 0; i < 8; i++) {
+                  document.getElementById(plateau[i][j]).style.visibility='visible';
+                }
+              }
+              return;
+            }
+          }
+          
+          while(tableauEstRempliEntier()==false) {
+            while(tableauEstRempliPartiel()==false) {
+              remplirTabEtape1();
+            }
+            remplirTabEtape2();
+          }
+          verifierImageApres();
+          document.getElementById("score").innerHTML=" Score : "+(score).toString();
+          // Réinitialise les variables i et j
+          I_1=-1;
+          J_1=-1;
+        } 
+      }
+
+      /* Gestion des scores */
+      function calculScore(axe) {
+        if (axe=='I') {
+          if (NbrPionI==3) {
+            score=score+level*100;
+            changedProgressBarValue(5);
+          } else if (NbrPionI==4) {
+            score=score+level*300;
+            changedProgressBarValue(10);
+          } else if (NbrPionI>=5) {
+            score=score+level*1000;
+            changedProgressBarValue(20);
+          }
+        } else if (axe=='J') {
+          if (NbrPionJ==3) {
+            score=score+level*100;
+            changedProgressBarValue(5);
+          } else if (NbrPionJ==4) {
+            score=score+level*300;
+            changedProgressBarValue(10);
+          } else if (NbrPionJ>=5) {
+            score=score+level*1000;
+            changedProgressBarValue(20);
+          }
+        }
+        document.getElementById("score").innerHTML=" Score : "+(score).toString();
+      }
+
+      /* Pause */
+      function pause() {
+        if (document.getElementById("box00").src=="http://localhost/JS/Projet/img/hideBox.png" || score==0 && triesLeft==5 && Math.round(actualprogress/3.73)==50) {
+          alert("La partie n'a pas commencée, inutile de la mettre en pause.");
+          return;
+        }
+        if (EstEnPause==true) {
+          EstEnPause=false;
+        } else if (EstEnPause==false) {
+          EstEnPause=true;
+        }
+        
+        if (EstEnPause==true) {
+          clearInterval(interval);
+          for (var j = 0; j < 8; j++) {
+            for (var i = 0; i < 8; i++) {
+              document.getElementById(plateau[i][j]).style.visibility='hidden';
+            }
+          }
+        } else if (EstEnPause==false) {
+          interval = setInterval("decreasedTime();", 3000);
+          for (var j = 0; j < 8; j++) {
+            for (var i = 0; i < 8; i++) {
+              document.getElementById(plateau[i][j]).style.visibility='visible';
+            }
+          }
+        }
+        if (EstEnPause==true) {
+          document.getElementById("pause").value="Resume";
+        } else if (EstEnPause==false) {
+          document.getElementById("pause").value="Pause";
+        }
+      }
+
+      /* Conseil */
+      function hint() {
+        if (document.getElementById("box00").src=="http://localhost/JS/Projet/img/hideBox.png" || score==0 && triesLeft==5 && Math.round(actualprogress/3.73)==50 || EstEnPause==true) {
+          alert("La partie n'a pas commencée, inutile de rechercher une solution maintenant.");
+          return;
+        }
+        if (conseil()!=null) {
+          document.getElementById("printHint").innerHTML="Solution : column "+(parseInt(conseil().substring(3,4))+1)+" & line "+(parseInt(conseil().substring(4,5))+1);
+          solution = setTimeout("effacerSolution();", 3000);
+        } else if (conseil()==null) {
+          EstEnJeu=false;
+          clearInterval(interval);
+          level=0;
+          prevScore=score;
+          score=0;
+          actualprogress=0;
+          alert("Plus aucun coup n'est possible !");
+          sendHighScores();
+          viderPlateau();
+          resetProgressBarValue('light');
+          for (var j = 0; j < 8; j++) {
+            for (var i = 0; i < 8; i++) {
+              document.getElementById(plateau[i][j]).style.visibility='visible';
+            }
+          }
+          return;
+        }
+      }
+
+    </script>
+  </head>
+  <body onload="resetProgressBarValue('light')">
+    <!-- Names -->
+    Player name : <input type="text" value="Entrer your name" id="playerName" onchange="nameChanged()">
+    <!-- Actions -->
+    </br><input class="actionButton" type="button" value= "New game" onclick="restartGame()" title="appuyer sur le boutton pour recommencer une partie">
+    <input class="actionButton" type="button" value= "High scores" onclick="displayHighScores()" title="appuyer sur le boutton pour voir les meilleurs scores">
+
+    <!-- Informations -->
+    </br><span id="triesLeft"> Tries left : 5</span>
+    <span id="level"> Level : 1</span>
+    <span id="score"> Score : 0</span>
+
+    <!-- Table -->
+    </br>
+    <table cellspacing="5">
+      <tr>
+        <th><img src="img/hideBox.png" class="boxImg" id="box00" onclick="imagePressed('box00')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box10" onclick="imagePressed('box10')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box20" onclick="imagePressed('box20')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box30" onclick="imagePressed('box30')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box40" onclick="imagePressed('box40')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box50" onclick="imagePressed('box50')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box60" onclick="imagePressed('box60')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box70" onclick="imagePressed('box70')"></th>
+      </tr>
+      <tr>
+        <th><img src="img/hideBox.png" class="boxImg" id="box01" onclick="imagePressed('box01')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box11" onclick="imagePressed('box11')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box21" onclick="imagePressed('box21')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box31" onclick="imagePressed('box31')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box41" onclick="imagePressed('box41')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box51" onclick="imagePressed('box51')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box61" onclick="imagePressed('box61')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box71" onclick="imagePressed('box71')"></th>
+      </tr>
+      <tr>
+        <th><img src="img/hideBox.png" class="boxImg" id="box02" onclick="imagePressed('box02')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box12" onclick="imagePressed('box12')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box22" onclick="imagePressed('box22')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box32" onclick="imagePressed('box32')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box42" onclick="imagePressed('box42')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box52" onclick="imagePressed('box52')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box62" onclick="imagePressed('box62')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box72" onclick="imagePressed('box72')"></th>
+      </tr>
+      <tr>
+        <th><img src="img/hideBox.png" class="boxImg" id="box03" onclick="imagePressed('box03')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box13" onclick="imagePressed('box13')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box23" onclick="imagePressed('box23')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box33" onclick="imagePressed('box33')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box43" onclick="imagePressed('box43')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box53" onclick="imagePressed('box53')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box63" onclick="imagePressed('box63')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box73" onclick="imagePressed('box73')"></th>
+      </tr>
+      <tr>
+        <th><img src="img/hideBox.png" class="boxImg" id="box04" onclick="imagePressed('box04')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box14" onclick="imagePressed('box14')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box24" onclick="imagePressed('box24')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box34" onclick="imagePressed('box34')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box44" onclick="imagePressed('box44')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box54" onclick="imagePressed('box54')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box64" onclick="imagePressed('box64')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box74" onclick="imagePressed('box74')"></th>
+      </tr>
+      <tr>
+        <th><img src="img/hideBox.png" class="boxImg" id="box05" onclick="imagePressed('box05')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box15" onclick="imagePressed('box15')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box25" onclick="imagePressed('box25')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box35" onclick="imagePressed('box35')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box45" onclick="imagePressed('box45')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box55" onclick="imagePressed('box55')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box65" onclick="imagePressed('box65')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box75" onclick="imagePressed('box75')"></th>
+      </tr>
+      <tr>
+        <th><img src="img/hideBox.png" class="boxImg" id="box06" onclick="imagePressed('box06')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box16" onclick="imagePressed('box16')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box26" onclick="imagePressed('box26')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box36" onclick="imagePressed('box36')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box46" onclick="imagePressed('box46')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box56" onclick="imagePressed('box56')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box66" onclick="imagePressed('box66')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box76" onclick="imagePressed('box76')"></th>
+      </tr>
+      <tr>
+        <th><img src="img/hideBox.png" class="boxImg" id="box07" onclick="imagePressed('box07')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box17" onclick="imagePressed('box17')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box27" onclick="imagePressed('box27')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box37" onclick="imagePressed('box37')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box47" onclick="imagePressed('box47')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box57" onclick="imagePressed('box57')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box67" onclick="imagePressed('box67')"></th> 
+        <th><img src="img/hideBox.png" class="boxImg" id="box77" onclick="imagePressed('box77')"></th>
+      </tr>
+    </table>
+
+    <!-- Progress Bar -->
+    <div id="pwidget">  
+      <div id="progressBar">
+          <div id="indicator"></div>
+      </div>
+      <div id="progressValue">0</div>
+    </div>
+
+    <span id="printHint" color="red"></span>
+
+    </br>
+    <input class="actionButton" type="button" value= "Pause" id="pause" onclick="pause()" title="appuyer sur le boutton pour mettre la partie en pause">
+    <input class="actionButton" type="button" value= "Hint" onclick="hint()" title="appuyer sur le boutton pour trouver une combinaison">
+    
+    </br> 
+    </br>HECKENAUER Robin
+    </br>Semestre 4 Groupe B1
+  </body>
+</html>

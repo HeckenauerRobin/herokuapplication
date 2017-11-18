@@ -1,0 +1,59 @@
+html, body {
+ margin: 0;
+ padding: 0;
+ min-width:1024px;
+}
+
+body {
+ background-color: white; 
+ font-family: Verdana, sans-serif; 
+}
+
+.actionButton {
+	color: white;
+	background: black;
+	width: 190px;
+	height: 40px;
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+span {
+	padding: 15px;
+}
+
+table {
+	background-color: black;
+}
+.boxImg {
+	width: 40px;
+	height: 40px;	
+	background-color: black;
+}
+
+#pwidget
+{
+  background-color:black;
+  width:377px;
+  padding:2px;
+}
+#progressBar
+{
+  width:373px;
+  padding:1px;
+  background-color:#202020;
+  border:1px solid black;
+  height:28px;
+}
+#indicator
+{
+  width:0px;
+  background-image:url("img/progressBarImage.png");
+  height:28px;
+  margin:0;
+}
+#progressValue
+{
+  text-align:center;
+  width:373px;
+  color: white;
+}
